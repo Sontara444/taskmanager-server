@@ -8,12 +8,19 @@ import { CreateTaskSchema, UpdateTaskSchema } from '../utils/validation';
 // @access  Private
 export const getTasks = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const { status, priority, sortBy, assignedToMe, createdByMe, overdue } = req.query;
+        const { status, priority, sortBy, sortOrder, assignedToMe, createdByMe, overdue, search } = req.query;
 
         let query: any = {};
 
         if (status) query.status = status;
         if (priority) query.priority = priority;
+
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
+        }
 
         if (assignedToMe === 'true' && req.user) {
             query.assignedToId = req.user._id;
@@ -30,13 +37,28 @@ export const getTasks = async (req: AuthRequest, res: Response): Promise<void> =
 
         let tasksQuery = Task.find(query).populate('assignedToId', 'name email').populate('creatorId', 'name email');
 
+        // MongoDB Sort for Date fields
         if (sortBy === 'dueDate') {
-            tasksQuery = tasksQuery.sort({ dueDate: 1 }); // Ascending
-        } else {
-            tasksQuery = tasksQuery.sort({ createdAt: -1 }); // Default new to old
+            tasksQuery = tasksQuery.sort({ dueDate: sortOrder === 'asc' ? 1 : -1 });
+        } else if (sortBy === 'createdAt') {
+            tasksQuery = tasksQuery.sort({ createdAt: sortOrder === 'asc' ? 1 : -1 });
+        } else if (!sortBy) {
+            // Default sort
+            tasksQuery = tasksQuery.sort({ createdAt: -1 });
         }
 
-        const tasks = await tasksQuery.exec();
+        let tasks = await tasksQuery.exec();
+
+        // In-memory sort for Priority (since it's an enum string)
+        if (sortBy === 'priority') {
+            const priorityOrder: { [key: string]: number } = { 'Urgent': 3, 'High': 2, 'Medium': 1, 'Low': 0 };
+            tasks.sort((a: any, b: any) => {
+                const pA = priorityOrder[a.priority] || 0;
+                const pB = priorityOrder[b.priority] || 0;
+                return sortOrder === 'asc' ? pA - pB : pB - pA;
+            });
+        }
+
         res.json(tasks);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error });
@@ -70,13 +92,14 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
             return;
         }
 
-        const { title, description, dueDate, priority, assignedToId } = validation.data;
+        const { title, description, dueDate, priority, status, assignedToId } = validation.data;
 
         const newTask = new Task({
             title,
             description,
             dueDate,
             priority,
+            status,
             creatorId: req.user?._id,
             assignedToId: assignedToId || undefined,
         });

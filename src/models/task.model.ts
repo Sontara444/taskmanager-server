@@ -27,7 +27,7 @@ export interface ITask extends Document {
 const TaskSchema: Schema = new Schema({
     title: { type: String, required: true, maxlength: 100 },
     description: { type: String, required: true },
-    dueDate: { type: Date, required: true },
+    dueDate: { type: Date, required: false },
     priority: {
         type: String,
         enum: Object.values(TaskPriority),

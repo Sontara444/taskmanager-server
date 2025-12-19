@@ -109,3 +109,41 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const user = await User.findById(req.user?._id);
+        if (!user) {
+            res.status(404).json({ message: 'User not found' });
+            return;
+        }
+
+        const { name, email } = req.body;
+
+        if (email && email !== user.email) {
+            const emailExists = await User.findOne({ email });
+            if (emailExists) {
+                res.status(400).json({ message: 'Email already in use' });
+                return;
+            }
+            user.email = email;
+        }
+
+        if (name) {
+            user.name = name;
+        }
+
+        const updatedUser = await user.save();
+
+        res.json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error });
+    }
+};
