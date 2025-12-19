@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import Task, { ITask } from '../models/task.model';
+import Notification from '../models/notification.model';
 import { CreateTaskSchema, UpdateTaskSchema } from '../utils/validation';
 
 // @desc    Get All Tasks (with filtering and sorting)
@@ -113,8 +114,20 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
         io.emit('task_created', populatedTask);
 
         if (assignedToId && assignedToId !== req.user?._id.toString()) {
+            const message = `You have been assigned a new task: ${title}`;
+
+            // Persistent Notification
+            await Notification.create({
+                recipientId: assignedToId,
+                senderId: req.user?._id,
+                type: 'TASK_ASSIGNED',
+                message,
+                relatedTaskId: newTask._id
+            });
+
+            // Real-time Notification
             io.to(assignedToId).emit('notification', {
-                message: `You have been assigned a new task: ${title}`,
+                message,
                 taskId: newTask._id
             });
             // Create internal notification entry if I had a Notification model (not strictly asked but good practice)
@@ -168,6 +181,22 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
         io.emit('task_updated', populatedTask);
 
         if (newAssigneeId && newAssigneeId !== oldAssigneeId && newAssigneeId !== req.user?._id.toString()) {
+            const message = `You have been assigned a task: ${task.title}`;
+
+            // Persistent Notification
+            await Notification.create({
+                recipientId: newAssigneeId,
+                senderId: req.user?._id,
+                type: 'TASK_ASSIGNED',
+                message,
+                relatedTaskId: task._id
+            });
+
+            io.to(newAssigneeId).emit('notification', {
+                message,
+                taskId: task._id
+            });
+
             io.emit('task_assigned', { task: populatedTask, assignedToId: newAssigneeId });
         }
 

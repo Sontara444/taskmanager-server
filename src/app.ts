@@ -8,6 +8,7 @@ const app = express();
 
 import authRoutes from './routes/auth.routes';
 import taskRoutes from './routes/task.routes';
+import notificationRoutes from './routes/notification.routes';
 
 // Middleware
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok' });
