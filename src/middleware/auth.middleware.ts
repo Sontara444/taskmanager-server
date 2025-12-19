@@ -11,6 +11,11 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
 
     token = req.cookies.jwt;
 
+    // Check header if cookie is missing (Fallback for cross-site)
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
     if (token) {
         try {
             const decoded: any = jwt.verify(token, process.env.JWT_SECRET as string);

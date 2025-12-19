@@ -31,11 +31,14 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         });
 
         if (user) {
-            generateToken(res, (user._id as any).toString());
+            const token = generateToken(res, (user._id as any).toString());
+            console.log(`User registered: ${user.email} (${user._id})`);
+
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                token
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -61,11 +64,14 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         const user = await User.findOne({ email });
 
         if (user && (await user.matchPassword(password))) {
-            generateToken(res, (user._id as any).toString());
+            const token = generateToken(res, (user._id as any).toString());
+            console.log(`User logged in: ${user.email} (${user._id})`);
+
             res.json({
                 _id: user._id,
                 name: user.name,
                 email: user.email,
+                token
             });
         } else {
             res.status(401).json({ message: 'Invalid email or password' });
