@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 
+app.set('trust proxy', 1); // Trust first key, required for secure cookies on Render
+
 import authRoutes from './routes/auth.routes';
 import taskRoutes from './routes/task.routes';
 import notificationRoutes from './routes/notification.routes';
