@@ -16,7 +16,7 @@ import notificationRoutes from './routes/notification.routes';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: 'https://taskmanager-client-bay.vercel.app',
+    origin: ['https://taskmanager-client-bay.vercel.app', 'http://localhost:5173'],
     credentials: true
 }));
 app.use(helmet());

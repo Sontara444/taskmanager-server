@@ -12,7 +12,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/taskmanage
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: 'https://taskmanager-client-bay.vercel.app',
+        origin: ['https://taskmanager-client-bay.vercel.app', 'http://localhost:5173'],
         credentials: true
     }
 });
