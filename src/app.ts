@@ -14,7 +14,7 @@ import notificationRoutes from './routes/notification.routes';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: 'http://localhost:5173', // Vite default port
+    origin: 'https://taskmanager-client-bay.vercel.app',
     credentials: true
 }));
 app.use(helmet());
