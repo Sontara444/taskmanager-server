@@ -5,7 +5,6 @@
         "lib": [
             "es6"
         ],
-        "rootDir": "src",
         "outDir": "dist",
         "strict": true,
         "noImplicitAny": true,
@@ -17,7 +16,8 @@
         "sourceMap": true
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "tests/**/*"
     ],
     "exclude": [
         "node_modules"
