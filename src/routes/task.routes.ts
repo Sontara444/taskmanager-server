@@ -4,7 +4,7 @@ import { protect } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
-router.use(protect); // All task routes are protected
+router.use(protect);
 
 router.route('/')
     .get(getTasks)

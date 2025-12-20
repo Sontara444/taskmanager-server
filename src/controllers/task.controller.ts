@@ -4,9 +4,6 @@ import Task, { ITask } from '../models/task.model';
 import Notification from '../models/notification.model';
 import { CreateTaskSchema, UpdateTaskSchema } from '../utils/validation';
 
-// @desc    Get All Tasks (with filtering and sorting)
-// @route   GET /api/tasks
-// @access  Private
 export const getTasks = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const { status, priority, sortBy, sortOrder, assignedToMe, createdByMe, overdue, search } = req.query;
@@ -33,24 +30,21 @@ export const getTasks = async (req: AuthRequest, res: Response): Promise<void> =
 
         if (overdue === 'true') {
             query.dueDate = { $lt: new Date() };
-            query.status = { $ne: 'Completed' }; // Assuming completed tasks aren't "overdue" in the same sense
+            query.status = { $ne: 'Completed' };
         }
 
         let tasksQuery = Task.find(query).populate('assignedToId', 'name email').populate('creatorId', 'name email');
 
-        // MongoDB Sort for Date fields
         if (sortBy === 'dueDate') {
             tasksQuery = tasksQuery.sort({ dueDate: sortOrder === 'asc' ? 1 : -1 });
         } else if (sortBy === 'createdAt') {
             tasksQuery = tasksQuery.sort({ createdAt: sortOrder === 'asc' ? 1 : -1 });
         } else if (!sortBy) {
-            // Default sort
             tasksQuery = tasksQuery.sort({ createdAt: -1 });
         }
 
         let tasks = await tasksQuery.exec();
 
-        // In-memory sort for Priority (since it's an enum string)
         if (sortBy === 'priority') {
             const priorityOrder: { [key: string]: number } = { 'Urgent': 3, 'High': 2, 'Medium': 1, 'Low': 0 };
             tasks.sort((a: any, b: any) => {
@@ -66,9 +60,6 @@ export const getTasks = async (req: AuthRequest, res: Response): Promise<void> =
     }
 };
 
-// @desc    Get Task By ID
-// @route   GET /api/tasks/:id
-// @access  Private
 export const getTaskById = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const task = await Task.findById(req.params.id).populate('assignedToId', 'name email').populate('creatorId', 'name email');
@@ -82,9 +73,6 @@ export const getTaskById = async (req: AuthRequest, res: Response): Promise<void
     }
 };
 
-// @desc    Create Task
-// @route   POST /api/tasks
-// @access  Private
 export const createTask = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const validation = CreateTaskSchema.safeParse(req.body);
@@ -109,14 +97,12 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
 
         const populatedTask = await newTask.populate(['assignedToId', 'creatorId']);
 
-        // Emit Real-time event
         const io = req.app.get('io');
         io.emit('task_created', populatedTask);
 
         if (assignedToId && assignedToId !== req.user?._id.toString()) {
             const message = `You have been assigned a new task: ${title}`;
 
-            // Persistent Notification
             await Notification.create({
                 recipientId: assignedToId,
                 senderId: req.user?._id,
@@ -125,17 +111,10 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
                 relatedTaskId: newTask._id
             });
 
-            // Real-time Notification
             io.to(assignedToId).emit('notification', {
                 message,
                 taskId: newTask._id
             });
-            // Create internal notification entry if I had a Notification model (not strictly asked but good practice)
-            // For now, simpler real-time notification.
-            // Note: `io.to(socketId)` works if I track socket IDs mapped to user IDs.
-            // Since I haven't implemented User-Socket mapping yet, I will emit a global event that clients filter, or implement the mapping.
-            // For valid "Assignment Notification", I need to target the user.
-            // I'll emit a global 'task_assigned' event and the client checks if custom ID matches.
             io.emit('task_assigned', { task: populatedTask, assignedToId });
         }
 
@@ -145,9 +124,6 @@ export const createTask = async (req: AuthRequest, res: Response): Promise<void>
     }
 };
 
-// @desc    Update Task
-// @route   PUT /api/tasks/:id
-// @access  Private
 export const updateTask = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const validation = UpdateTaskSchema.safeParse(req.body);
@@ -162,11 +138,9 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
             return;
         }
 
-        // Checking updates for notification triggers
         const { assignedToId: newAssigneeId, status, priority } = validation.data;
         const oldAssigneeId = task.assignedToId?.toString();
 
-        // Update fields
         const updates: any = { ...validation.data };
         if (updates.assignedToId === '') {
             updates.assignedToId = null;
@@ -183,7 +157,6 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
         if (newAssigneeId && newAssigneeId !== oldAssigneeId && newAssigneeId !== req.user?._id.toString()) {
             const message = `You have been assigned a task: ${task.title}`;
 
-            // Persistent Notification
             await Notification.create({
                 recipientId: newAssigneeId,
                 senderId: req.user?._id,
@@ -206,9 +179,6 @@ export const updateTask = async (req: AuthRequest, res: Response): Promise<void>
     }
 };
 
-// @desc    Delete Task
-// @route   DELETE /api/tasks/:id
-// @access  Private
 export const deleteTask = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const task = await Task.findById(req.params.id);

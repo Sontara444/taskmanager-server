@@ -1,10 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth.middleware';
 import Notification from '../models/notification.model';
-
-// @desc    Get user notifications
-// @route   GET /api/notifications
-// @access  Private
 export const getNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const notifications = await Notification.find({ recipientId: req.user?._id })
@@ -18,9 +14,6 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
     }
 };
 
-// @desc    Mark notification as read
-// @route   PUT /api/notifications/:id/read
-// @access  Private
 export const markAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const notification = await Notification.findById(req.params.id);
@@ -44,9 +37,6 @@ export const markAsRead = async (req: AuthRequest, res: Response): Promise<void>
     }
 };
 
-// @desc    Mark all notifications as read
-// @route   PUT /api/notifications/read-all
-// @access  Private
 export const markAllAsRead = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         await Notification.updateMany(

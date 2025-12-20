@@ -3,15 +3,9 @@ import mongoose from 'mongoose';
 import appModule from '../src/app';
 const app = appModule;
 
-// Mock mongoose connection to avoid actual DB writes or use in-memory mongo
-// For simplicity in this assessment, we might connect to a test DB or mock.
-// Since requirement is "Unit tests", ideally we mock the service/model.
-// But with the current structure (controller directly), integration tests are more practical 
-// to verify the "business logic" in the controller without extensive refactoring.
-// I will use a test database.
+
 
 beforeAll(async () => {
-    // Connect to a test database
     const url = process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/taskmanager_test';
     await mongoose.connect(url);
 });
@@ -48,9 +42,6 @@ describe('Auth & Task API', () => {
             });
 
         expect(res.statusCode).toEqual(200);
-        // Token is in cookie, but we can't easily access it here without parsing set-cookie
-        // However, we need the token for subsequent requests if we weren't using cookies or if supertest agent wasn't used.
-        // Supertest agent persists cookies.
     });
 
     it('should fail login with wrong password', async () => {
@@ -64,7 +55,6 @@ describe('Auth & Task API', () => {
         expect(res.statusCode).toEqual(401);
     });
 
-    // Use agent for authenticated requests
     const agent = request.agent(app);
 
     it('should login with agent to persist cookie', async () => {

@@ -19,7 +19,6 @@ const io = new Server(server, {
 
 app.set('io', io);
 
-// Socket.io Connection Handler
 io.on('connection', (socket) => {
     console.log('Client connected:', socket.id);
 
@@ -33,7 +32,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Database Connection
 mongoose.connect(MONGO_URI)
     .then(() => {
         console.log('Connected to MongoDB');

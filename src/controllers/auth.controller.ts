@@ -4,9 +4,7 @@ import User from '../models/user.model';
 import generateToken from '../utils/generateToken';
 import { RegisterUserSchema, LoginUserSchema } from '../utils/validation';
 
-// @desc    Register a new user
-// @route   POST /api/auth/register
-// @access  Public
+
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const validation = RegisterUserSchema.safeParse(req.body);
@@ -27,7 +25,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
         const user = await User.create({
             name,
             email,
-            passwordHash: password, // Pre-save hook will hash this
+            passwordHash: password,
         });
 
         if (user) {
@@ -48,9 +46,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     }
 };
 
-// @desc    Auth user & get token
-// @route   POST /api/auth/login
-// @access  Public
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
     try {
         const validation = LoginUserSchema.safeParse(req.body);
@@ -81,9 +76,6 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-// @desc    Logout user / clear cookie
-// @route   POST /api/auth/logout
-// @access  Public
 export const logoutUser = (req: Request, res: Response) => {
     res.cookie('jwt', '', {
         httpOnly: true,
@@ -94,9 +86,6 @@ export const logoutUser = (req: Request, res: Response) => {
     res.status(200).json({ message: 'Logged out successfully' });
 };
 
-// @desc    Get current user profile
-// @route   GET /api/auth/me
-// @access  Private
 export const getMe = async (req: AuthRequest, res: Response) => {
     const user = {
         _id: req.user?._id,
@@ -106,9 +95,7 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     res.status(200).json(user);
 };
 
-// @desc    Get all users (for assignment)
-// @route   GET /api/auth/users
-// @access  Private
+
 export const getUsers = async (req: AuthRequest, res: Response) => {
     try {
         const users = await User.find({}).select('name email _id');
@@ -118,9 +105,6 @@ export const getUsers = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/auth/profile
-// @access  Private
 export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const user = await User.findById(req.user?._id);
